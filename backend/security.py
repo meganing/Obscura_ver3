@@ -13,11 +13,11 @@ log = logging.getLogger("obscura")
 # Using direct hashes to eliminate os.environ.get as a variable
 USERS: Dict[str, Dict[str, str]] = {
     "admin": {
-        "hashed_password": "$2b$12$XKST7L7C5hPbQkwOBozheOCt/2VwrXhtbXf1RR3IqezSSGQhsd9UO", # Direct hash for admin123
+        "hashed_password": "$2b$12$MV1qjc.KSOyhbYzO6duYduVrjwrb9nmsUw9Mtx.es34PdNpsoWX8K", # Direct hash for admin123
         "role": "admin"
     },
     "user": {
-        "hashed_password": "$2b$12$9XxSIVPGhEYK9Py5B53MleovA.L5OW.ydx0.vHeU63v1zhV8EF.6a", # Direct hash for user123
+        "hashed_password": "$2b$12$ofq5hb5JnFoaIhBACMvfVub2aNrF7kSZmcAN1nTggXT1WEHZ/F62C", # Direct hash for user123
         "role": "user"
     }
 }
