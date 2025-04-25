@@ -6,7 +6,7 @@
     <title>Obscura: Data Anonymization</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Link to the shared CSS file -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/static/style.css"> <!-- Use absolute path from root -->
 </head>
 <body>
     <header>
@@ -16,10 +16,13 @@
                 <h1>Obscura<span>Prototype</span></h1>
             </div>
             <nav class="nav-links">
-                <!-- Links to actual pages -->
+                <!-- Links adjusted: Dashboard is active, others are placeholders -->
                 <a href="/" class="active"><i class="fas fa-tachometer-alt fa-fw"></i> Dashboard</a>
-                <a href="/documentation"><i class="fas fa-book fa-fw"></i> Documentation</a>
-                <a href="/support"><i class="fas fa-headset fa-fw"></i> Support</a>
+                <!-- Changed href to # and added basic alert -->
+                <a href="#" onclick="alert('Documentation not implemented yet.'); return false;"><i class="fas fa-book fa-fw"></i> Documentation</a>
+                <a href="#" onclick="alert('Support not implemented yet.'); return false;"><i class="fas fa-headset fa-fw"></i> Support</a>
+                <!-- Logout Link -->
+                 <a href="/logout"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a>
             </nav>
         </div>
     </header>
@@ -29,8 +32,9 @@
             <div class="dashboard">
                 <div class="sidebar">
                     <div class="sidebar-header">
-                        <h3>Dashboard Tools</h3>
-                        <p>Select view</p>
+                        <!-- Display username if available -->
+                        <h3>Welcome, {{ user.username if user else 'Guest' }}</h3>
+                        <p>Select a tool</p>
                     </div>
                     <!-- Sidebar controls sections *within* this page -->
                     <div class="menu-item active" data-section="data-processing-section">
@@ -41,6 +45,15 @@
                         <i class="fas fa-history fa-fw"></i>
                         <span>Processing History</span>
                     </div>
+                    <!-- Admin only link for Logs -->
+                    {% if user and user.role == 'admin' %}
+                    <div class="menu-item">
+                        <a href="/logs" target="_blank" style="text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%;">
+                            <i class="fas fa-clipboard-list fa-fw"></i>
+                            <span>View Logs</span>
+                        </a>
+                    </div>
+                    {% endif %}
                     <div class="menu-item" data-section="settings-section">
                         <i class="fas fa-cog fa-fw"></i>
                         <span>Settings</span>
@@ -53,11 +66,14 @@
                         <h2 class="section-title"><i class="fas fa-shield-alt"></i> Data Anonymization</h2>
                         <span class="section-subtitle">Upload and anonymize sensitive data (CSV/Excel)</span>
 
+                        <!-- Alert for errors -->
+                        <div id="error-alert" class="alert alert-danger" style="display: none;"></div>
+
                         <div class="upload-container" id="drop-area">
                             <i class="fas fa-file-upload"></i>
                             <h3>Upload Dataset</h3>
                             <p>Drag & drop your CSV or Excel file here, or click to browse</p>
-                            <input type="file" id="file-input" accept=".csv, .xlsx, .xls" style="display: none;">
+                            <input type="file" id="file-input" accept=".csv, .xlsx" style="display: none;"> <!-- Removed .xls for simplicity, matching backend -->
                             <button class="btn" id="browse-btn"><i class="fas fa-folder-open"></i> Browse Files</button>
                         </div>
 
@@ -97,11 +113,11 @@
                                 <div class="checkbox-container">
                                     <div class="checkbox-item">
                                         <input type="checkbox" id="technique-masking" value="masking" checked>
-                                        <label for="technique-masking">Masking (Replace with ***)</label>
+                                        <label for="technique-masking">Masking (e.g., J***n)</label>
                                     </div>
                                     <div class="checkbox-item">
                                         <input type="checkbox" id="technique-hashing" value="hashing">
-                                        <label for="technique-hashing">Hashing (Simple SHA256 Demo)</label>
+                                        <label for="technique-hashing">Hashing (SHA256)</label>
                                     </div>
                                 </div>
                                 <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 10px;">Note: Masking takes priority if both are selected.</p>
@@ -129,7 +145,6 @@
                             <i class="fas fa-info-circle"></i> This feature is for demonstration only. History is not saved persistently in this prototype.
                          </div>
                          <p>Placeholder content for processing history would go here if implemented.</p>
-                         <!-- You can add the static table example here if you want -->
                     </div> <!-- End History Section -->
 
                     <!-- Settings Section (Placeholder) -->
@@ -140,7 +155,6 @@
                              <i class="fas fa-info-circle"></i> Settings are not functional or saved in this prototype version.
                          </div>
                          <p>Placeholder content for settings configuration would go here if implemented.</p>
-                         <!-- You can add the static settings form example here if you want -->
                     </div> <!-- End Settings Section -->
 
                 </div> <!-- End Content Area -->
@@ -150,14 +164,13 @@
 
     <!-- Process Complete Modal -->
     <div class="modal" id="process-modal">
-        <!-- Modal structure remains the same as before -->
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Processing Complete</h3>
                 <button class="close-modal" aria-label="Close modal">×</button>
             </div>
             <div class="modal-body">
-                <div class="success-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="success-icon"><i class="fas fa-check-circle"></i></div> <!-- Changed icon -->
                 <h4 style="text-align: center; margin-bottom: 15px;">Anonymization Successful!</h4>
                 <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
                     Your anonymized data file should have started downloading automatically.
@@ -178,7 +191,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" id="process-new-btn"><i class="fas fa-file-alt"></i> Process Another File</button>
+                <button class="btn btn-outline close-modal"><i class="fas fa-times"></i> Close</button>
+                <button class="btn" id="process-new-btn"><i class="fas fa-file-alt"></i> Process Another File</button>
             </div>
         </div>
     </div> <!-- End Modal -->
@@ -191,6 +205,7 @@
         // --- DOM Elements ---
         const sidebarItems = document.querySelectorAll('.sidebar .menu-item[data-section]');
         const contentSections = document.querySelectorAll('.content-area .content-section');
+        const errorAlert = document.getElementById('error-alert'); // Added error display element
 
         const dropArea = document.getElementById('drop-area');
         const fileInput = document.getElementById('file-input');
@@ -208,7 +223,8 @@
         const processBtn = document.getElementById('process-btn');
 
         const processModal = document.getElementById('process-modal');
-        const closeModal = processModal.querySelector('.close-modal');
+        // Use querySelectorAll for potentially multiple close buttons
+        const closeModalBtns = processModal.querySelectorAll('.close-modal');
         const resultFilename = document.getElementById('result-filename');
         const fieldsCount = document.getElementById('fields-count');
         const processedFields = document.getElementById('processed-fields');
@@ -220,6 +236,21 @@
         let detectedPiiColumns = {};
         let currentHeaders = [];
         let selectedPiiForProcessing = [];
+        let originalFilenameForDisplay = ''; // Store original filename
+
+        // --- Utility Functions ---
+        function displayError(message) {
+            errorAlert.textContent = message;
+            errorAlert.style.display = 'block';
+            // Optional: Auto-hide after some time
+            // setTimeout(() => { errorAlert.style.display = 'none'; }, 5000);
+        }
+
+        function hideError() {
+            errorAlert.style.display = 'none';
+            errorAlert.textContent = '';
+        }
+
 
         // --- Sidebar Navigation (within Dashboard) ---
         function showDashboardSection(sectionId) {
@@ -227,24 +258,36 @@
                 section.style.display = section.id === sectionId ? 'block' : 'none';
             });
             sidebarItems.forEach(item => {
-                item.classList.toggle('active', item.getAttribute('data-section') === sectionId);
+                // Handle potential anchor tags inside menu items (like the Logs link)
+                const itemSection = item.getAttribute('data-section');
+                 if (itemSection) {
+                    item.classList.toggle('active', itemSection === sectionId);
+                 }
             });
-            // Reset file upload state if navigating away from anonymization tool
-            if (sectionId !== 'data-processing-section') {
-                // Only reset if a file *was* being processed
-                if (tempFileId || currentFile) {
-                   // resetFileUpload(); // Decide if you want a full reset or just hide elements
-                }
+            hideError(); // Hide errors when switching sections
+            // Reset file upload state only if navigating away from data processing AND a file was active
+            if (sectionId !== 'data-processing-section' && (tempFileId || currentFile)) {
+                // console.log('Navigating away, resetting file upload state.');
+                // resetFileUpload(); // Full reset might be too aggressive, let's just hide elements for now
+                fileDetails.style.display = 'none';
+                dataOptions.style.display = 'none';
+                dataPreview.style.display = 'none';
             }
-             console.log(`Showing dashboard section: ${sectionId}`);
+            // console.log(`Showing dashboard section: ${sectionId}`); // Debug log removed
         }
 
         sidebarItems.forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                const sectionId = this.getAttribute('data-section');
-                showDashboardSection(sectionId);
-            });
+             // Ensure event listener is only on items controlling sections
+             if (item.hasAttribute('data-section')) {
+                item.addEventListener('click', function(e) {
+                    // Prevent default only if it's not a real link (like the Logs link)
+                    if (!item.querySelector('a[target="_blank"]')) {
+                       e.preventDefault();
+                       const sectionId = this.getAttribute('data-section');
+                       showDashboardSection(sectionId);
+                    }
+                });
+            }
         });
 
 
@@ -256,15 +299,15 @@
         dropArea.addEventListener('drop', handleDrop);
         cancelBtn.addEventListener('click', resetFileUpload);
         processBtn.addEventListener('click', handleProcessRequest);
-        closeModal.addEventListener('click', hideModal);
+        // Add listener to all close buttons in the modal
+        closeModalBtns.forEach(btn => btn.addEventListener('click', hideModal));
         processNewBtn.addEventListener('click', () => {
             hideModal();
             resetFileUpload();
         });
 
-        // --- Functions (handleFileSelect, uploadAndDetect, showDataOptions, etc.) ---
-        // --- Paste the JavaScript functions from the previous response here ---
-        // --- Make sure API_BASE_URL is empty ('') or '/' if needed ---
+        // --- Functions ---
+
         function handleFileSelect(e) {
             if (e.target.files && e.target.files[0]) {
                 currentFile = e.target.files[0];
@@ -287,22 +330,34 @@
             e.preventDefault();
             handleDragLeave();
             if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                currentFile = e.dataTransfer.files[0];
-                uploadAndDetect(currentFile);
+                const droppedFile = e.dataTransfer.files[0];
+                const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+                 const allowedExt = ['.csv', '.xlsx'];
+                 const fileExt = '.' + droppedFile.name.split('.').pop().toLowerCase();
+
+                // Basic client-side type check
+                if (allowedExt.includes(fileExt) || allowedTypes.includes(droppedFile.type)) {
+                    currentFile = droppedFile;
+                    uploadAndDetect(currentFile);
+                } else {
+                    displayError(`Unsupported file type: ${droppedFile.name}. Please upload CSV or XLSX.`);
+                }
             }
         }
 
         async function uploadAndDetect(file) {
             if (!file) return;
-            resetFileUploadPartial();
+            resetFileUploadPartial(); // Clear previous state but keep drop area visible
+            hideError(); // Hide previous errors
 
+            // Display initial file info immediately
+            originalFilenameForDisplay = file.name; // Store for later use
             fileNameEl.textContent = file.name;
             fileSizeEl.textContent = formatFileSize(file.size);
             fileTypeEl.textContent = file.type || 'N/A';
             fileDetails.style.display = 'block';
             fileStatusBadge.textContent = 'Uploading & Processing...';
-            fileStatusBadge.style.backgroundColor = 'rgba(255, 206, 84, 0.1)';
-            fileStatusBadge.style.color = '#8a6d3b';
+            fileStatusBadge.className = 'badge warning'; // Use CSS classes for status
             processBtn.disabled = true;
             processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
@@ -310,50 +365,55 @@
             formData.append('file', file);
 
             try {
-                // Use relative path for API call since served from same origin
-                const response = await fetch(`/api/process`, {
+                const response = await fetch(`/api/process`, { // Use relative path
                     method: 'POST',
                     body: formData,
+                    // Consider adding headers if needed, e.g., CSRF token if implemented
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ detail: `Upload failed! status: ${response.status}` }));
-                    throw new Error(errorData.detail || `Upload failed! status: ${response.status}`);
+                    // Try to get detailed error message from backend JSON response
+                    let errorDetail = `Upload failed! Status: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorDetail = errorData.detail || errorDetail; // Use backend detail if available
+                    } catch (e) { /* Ignore if response is not JSON */ }
+                    throw new Error(errorDetail);
                 }
 
                 const data = await response.json();
-                console.log("Detection Response:", data);
+                // console.log("Detection Response:", data); // Debug log removed
 
                 tempFileId = data.temp_id;
                 detectedPiiColumns = data.detected_pii;
                 currentHeaders = data.headers;
+                originalFilenameForDisplay = data.original_filename || originalFilenameForDisplay; // Update if backend provides it
 
                 showDataOptions(data.headers, data.detected_pii);
                 generatePreview(data.headers, data.preview_data);
 
                 fileStatusBadge.textContent = 'Ready for Processing';
-                fileStatusBadge.style.backgroundColor = 'rgba(93, 156, 236, 0.12)';
-                fileStatusBadge.style.color = 'var(--secondary)';
+                fileStatusBadge.className = 'badge info'; // Use CSS classes
                 processBtn.disabled = false;
                 processBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Process & Anonymize';
 
             } catch (error) {
-                console.error('Upload/Detection Error:', error);
+                // console.error('Upload/Detection Error:', error); // Debug log removed
                 fileStatusBadge.textContent = 'Error';
-                fileStatusBadge.style.backgroundColor = 'rgba(255, 94, 125, 0.1)';
-                fileStatusBadge.style.color = 'var(--accent)';
-                alert(`Error processing file: ${error.message}`);
-                resetFileUpload();
+                fileStatusBadge.className = 'badge danger'; // Use CSS classes
+                displayError(`Error processing file: ${error.message}`); // Show error in UI
+                resetFileUpload(); // Full reset on error
             }
         }
 
         function showDataOptions(headers, detectedPii) {
-             piiFields.innerHTML = '';
-             selectedPiiForProcessing = [];
+             piiFields.innerHTML = ''; // Clear previous options
+             selectedPiiForProcessing = []; // Reset selections
 
              headers.forEach(header => {
                  const isDetected = header in detectedPii;
-                 const headerId = `field-${header.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                 // Create a safer ID for the checkbox input
+                 const headerId = `field-id-${header.replace(/[^a-zA-Z0-9_]/g, '_')}`;
 
                  const checkboxItem = document.createElement('div');
                  checkboxItem.className = 'checkbox-item';
@@ -361,33 +421,40 @@
                  const checkbox = document.createElement('input');
                  checkbox.type = 'checkbox';
                  checkbox.id = headerId
-                 checkbox.value = header;
-                 checkbox.checked = isDetected;
+                 checkbox.value = header; // Use the actual header name as value
+                 checkbox.checked = isDetected; // Check if auto-detected
 
+                 // If detected, add to initial selection
                  if (isDetected) {
                      selectedPiiForProcessing.push(header);
                  }
 
+                 // Event listener for changes
                  checkbox.addEventListener('change', function() {
                      if (this.checked) {
-                         selectedPiiForProcessing.push(header);
+                         if (!selectedPiiForProcessing.includes(header)) {
+                             selectedPiiForProcessing.push(header);
+                         }
                      } else {
                          selectedPiiForProcessing = selectedPiiForProcessing.filter(h => h !== header);
                      }
-                     updatePreviewHighlighting();
-                     console.log("Selected PII:", selectedPiiForProcessing);
+                     updatePreviewHighlighting(); // Update table highlight
+                     // console.log("Selected PII:", selectedPiiForProcessing); // Debug log removed
                  });
 
                  const label = document.createElement('label');
                  label.setAttribute('for', headerId);
-                 label.textContent = header;
+                 label.textContent = header; // Display the header name
                  if (isDetected) {
-                     label.title = `Detected as: ${detectedPii[header]}`;
+                     label.title = `Auto-detected as: ${detectedPii[header]}`; // Tooltip
                  }
 
+                 // Make the whole item clickable (improves usability)
                  checkboxItem.addEventListener('click', (e) => {
+                    // Only toggle if the click wasn't directly on the checkbox itself
                     if (e.target !== checkbox) {
                         checkbox.checked = !checkbox.checked;
+                        // Manually dispatch change event to trigger the listener above
                         checkbox.dispatchEvent(new Event('change'));
                     }
                  });
@@ -398,22 +465,29 @@
              });
 
              dataOptions.style.display = 'block';
-             updatePreviewHighlighting();
+             updatePreviewHighlighting(); // Initial highlight based on auto-detection
          }
 
         function generatePreview(headers, previewData) {
+            // Sanitize headers before using them in HTML attributes
+            const sanitizedHeaders = headers.map(h => escapeHtml(h));
+
             let headerHTML = '<thead><tr>';
-            headers.forEach(header => {
-                headerHTML += `<th data-header="${escapeHtml(header)}">${escapeHtml(header)}</th>`;
+            sanitizedHeaders.forEach(header => {
+                // Use the sanitized header in data-header attribute
+                headerHTML += `<th data-header="${header}">${header}</th>`;
             });
             headerHTML += '</tr></thead>';
 
             let rowsHTML = '<tbody>';
             previewData.forEach(row => {
                 rowsHTML += '<tr>';
-                headers.forEach(header => {
-                    const cellValue = row[header] !== null && row[header] !== undefined ? row[header] : '';
-                    rowsHTML += `<td data-header="${escapeHtml(header)}">${escapeHtml(cellValue)}</td>`;
+                headers.forEach((origHeader, index) => { // Iterate using original headers for lookup
+                    const sanitizedHeader = sanitizedHeaders[index];
+                    // Get value using original header, sanitize for display
+                    const cellValue = row[origHeader] !== null && row[origHeader] !== undefined ? row[origHeader] : '';
+                    // Use sanitized header in data-header, display sanitized value
+                    rowsHTML += `<td data-header="${sanitizedHeader}">${escapeHtml(cellValue)}</td>`;
                 });
                 rowsHTML += '</tr>';
             });
@@ -425,35 +499,52 @@
         }
 
         function updatePreviewHighlighting() {
+             // Select all th and td elements within the preview table
              previewTable.querySelectorAll('th, td').forEach(cell => {
-                 const header = cell.getAttribute('data-header');
-                 if (selectedPiiForProcessing.includes(header)) {
-                     cell.classList.add('anonymized');
+                 const header = cell.getAttribute('data-header'); // Read the possibly escaped header
+                 // Check if this header (in its original form) is in the selected list
+                 const originalHeader = header; // Assuming escapeHtml doesn't change lookup value needed
+                 if (selectedPiiForProcessing.includes(originalHeader)) {
+                     cell.classList.add('anonymized'); // Add highlight class
                  } else {
-                     cell.classList.remove('anonymized');
+                     cell.classList.remove('anonymized'); // Remove highlight class
                  }
              });
          }
 
         async function handleProcessRequest() {
             if (!tempFileId) {
-                alert("No file processed yet. Please upload a file first.");
+                displayError("No file processed yet. Please upload a file first.");
                 return;
             }
              if (selectedPiiForProcessing.length === 0) {
-                 if (!confirm("You haven't selected any columns to anonymize. Proceeding will download the data structure without changes. Continue?")) {
-                     return;
+                 // Use confirm dialog for user decision
+                 if (!confirm("You haven't selected any columns to anonymize. Proceeding will download the data mostly unchanged (structure might be preserved). Continue?")) {
+                     return; // Stop if user cancels
                  }
              }
 
+            hideError(); // Clear previous errors
             processBtn.disabled = true;
             processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Anonymizing...';
             fileStatusBadge.textContent = 'Anonymizing...';
+            fileStatusBadge.className = 'badge warning';
 
             const techniques = {
                 masking: document.getElementById('technique-masking')?.checked || false,
                 hashing: document.getElementById('technique-hashing')?.checked || false,
             };
+
+            // Ensure at least one technique is selected if columns are chosen
+             if (selectedPiiForProcessing.length > 0 && !techniques.masking && !techniques.hashing) {
+                displayError("Please select at least one anonymization technique (Masking or Hashing).");
+                processBtn.disabled = false;
+                 processBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Process & Anonymize';
+                fileStatusBadge.textContent = 'Ready for Processing';
+                fileStatusBadge.className = 'badge info';
+                return;
+             }
+
 
             const payload = {
                 selected_pii: selectedPiiForProcessing,
@@ -461,28 +552,46 @@
             };
 
             try {
-                const response = await fetch(`/api/anonymize/${tempFileId}`, { // Relative path
+                const response = await fetch(`/api/anonymize/${tempFileId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add other headers like Authorization if needed
+                    },
                     body: JSON.stringify(payload),
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ detail: `Anonymization failed! status: ${response.status}` }));
-                    throw new Error(errorData.detail || `Anonymization failed! status: ${response.status}`);
+                    let errorDetail = `Anonymization failed! Status: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorDetail = errorData.detail || errorDetail;
+                    } catch (e) { /* Ignore if response is not JSON */ }
+                    throw new Error(errorDetail);
                 }
 
+                // Handle file download
                 const blob = await response.blob();
                 const contentDisposition = response.headers.get('content-disposition');
-                let downloadFilename = "anonymized_data.csv";
+                let downloadFilename = "anonymized_data.csv"; // Default filename
 
                 if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-                    if (filenameMatch && filenameMatch.length > 1) {
-                        downloadFilename = filenameMatch[1];
+                    // More robust filename extraction
+                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                    const matches = filenameRegex.exec(contentDisposition);
+                    if (matches != null && matches[1]) {
+                        downloadFilename = matches[1].replace(/['"]/g, '');
+                    }
+                } else {
+                    // Fallback based on original name if header missing
+                    const ext = originalFilenameForDisplay.split('.').pop();
+                    if (ext) {
+                        downloadFilename = `anonymized_${tempFileId}.${ext}`;
                     }
                 }
 
+
+                // Trigger download using a temporary link
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
@@ -490,94 +599,131 @@
                 a.download = downloadFilename;
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url); // Clean up the object URL
+                document.body.removeChild(a); // Remove the temporary link
 
-                console.log("Anonymization successful, download triggered.");
+                // console.log("Anonymization successful, download triggered."); // Debug log removed
                 fileStatusBadge.textContent = 'Completed & Downloaded';
-                fileStatusBadge.style.backgroundColor = 'rgba(66, 206, 159, 0.1)';
-                fileStatusBadge.style.color = 'var(--success)';
+                fileStatusBadge.className = 'badge success'; // Use CSS classes
 
-                showModal(downloadFilename, selectedPiiForProcessing);
+                showModal(downloadFilename, selectedPiiForProcessing); // Show success modal
 
             } catch (error) {
-                console.error('Anonymization Error:', error);
+                // console.error('Anonymization Error:', error); // Debug log removed
                 fileStatusBadge.textContent = 'Anonymization Error';
-                fileStatusBadge.style.backgroundColor = 'rgba(255, 94, 125, 0.1)';
-                fileStatusBadge.style.color = 'var(--accent)';
-                alert(`Error anonymizing data: ${error.message}`);
-                processBtn.disabled = false;
-                 processBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Process & Anonymize';
+                fileStatusBadge.className = 'badge danger';
+                displayError(`Error anonymizing data: ${error.message}`);
+                processBtn.disabled = false; // Re-enable button on error
+                processBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Process & Anonymize';
 
             } finally {
-                tempFileId = null; // Invalidate after attempt
+                // Invalidate temp ID *only* after successful processing or definite failure?
+                // Let's invalidate it here - if it failed, retrying might not work anyway without re-upload.
+                // tempFileId = null; // Invalidate after attempt - Reconsider if retry logic is added
             }
         }
 
         function showModal(downloadedFilename, anonymizedFieldsList) {
              resultFilename.textContent = downloadedFilename;
-             fieldsCount.textContent = `${anonymizedFieldsList.length} fields`;
-             processedFields.innerHTML = '';
+             fieldsCount.textContent = `${anonymizedFieldsList.length} ${anonymizedFieldsList.length === 1 ? 'field' : 'fields'}`; // Pluralization
+             processedFields.innerHTML = ''; // Clear previous fields
              if (anonymizedFieldsList.length > 0) {
                  anonymizedFieldsList.forEach(field => {
                      const item = document.createElement('div');
-                     item.className = 'checkbox-item';
-                     item.style.backgroundColor = 'var(--light)'; item.style.border = '1px solid var(--border)'; item.style.boxShadow = 'none'; item.style.cursor = 'default';
+                     item.className = 'checkbox-item processed-field-item'; // Add specific class
+                     // Style directly or use CSS: item.style.backgroundColor = 'var(--light)'; ...
                      const icon = document.createElement('i');
+                     // Use check circle for success
                      icon.className = 'fas fa-check-circle'; icon.style.color = 'var(--success)'; icon.style.marginRight = '8px';
-                     const label = document.createElement('span'); label.textContent = field;
-                     item.appendChild(icon); item.appendChild(label);
+                     const label = document.createElement('span');
+                     label.textContent = escapeHtml(field); // Escape field name
+                     item.appendChild(icon);
+                     item.appendChild(label);
                      processedFields.appendChild(item);
                  });
              } else {
-                 processedFields.innerHTML = '<p style="font-style: italic; color: var(--text-light);">No fields were anonymized.</p>';
+                 processedFields.innerHTML = '<p style="font-style: italic; color: var(--text-light);">No fields were selected for anonymization.</p>';
              }
-             processModal.classList.add('show');
+             processModal.classList.add('show'); // Show the modal
          }
 
          function hideModal() {
-            processModal.classList.remove('show');
+            processModal.classList.remove('show'); // Hide the modal
          }
 
+        // Resets the state partially, keeping the drop area visible
         function resetFileUploadPartial() {
+            hideError();
             fileDetails.style.display = 'none';
             dataOptions.style.display = 'none';
             dataPreview.style.display = 'none';
             processBtn.disabled = true;
             processBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Process & Anonymize';
+            fileStatusBadge.textContent = 'Ready';
+            fileStatusBadge.className = 'badge info'; // Reset badge appearance
             currentFile = null;
-            tempFileId = null;
+            // tempFileId = null; // Keep tempFileId until processing attempt or cancel
             detectedPiiColumns = {};
             currentHeaders = [];
             selectedPiiForProcessing = [];
-            piiFields.innerHTML = '';
-            previewTable.innerHTML = '';
+            piiFields.innerHTML = ''; // Clear checkboxes
+            previewTable.innerHTML = ''; // Clear table
+            originalFilenameForDisplay = '';
         }
 
+        // Full reset, including clearing the file input
         function resetFileUpload() {
             resetFileUploadPartial();
-            fileInput.value = '';
+            fileInput.value = ''; // Clear the file input selection
+            tempFileId = null; // Clear temp id on full reset/cancel
+             // Restore drop area appearance
+             dropArea.style.borderColor = 'var(--border)';
+            dropArea.style.transform = 'scale(1)';
         }
 
+        // Helper to format file size
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
-            const k = 1024; const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        function escapeHtml(unsafe) {
-            if (typeof unsafe !== 'string') { try { unsafe = String(unsafe); } catch (e) { return ''; } }
-            return unsafe.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, '"').replace(/'/g, "'");
+// *** CORRECTED HTML escaping function ***
+function escapeHtml(unsafe) {
+            // Ensure input is a string
+            if (typeof unsafe !== 'string') {
+                try { unsafe = String(unsafe); } catch (e) { return ''; } // Return empty string if conversion fails
+            }
+            // Perform replacements with correct HTML entities
+            return unsafe
+                 .replace(/&/g, "&amp;")   // Replace & with &
+                 .replace(/</g, "&lt;")    // Replace < with <
+                 .replace(/>/g, "&gt;")    // Replace > with >
+                 .replace(/"/g, "&quot;")  
+                 .replace(/'/g, "&#039;");
          }
 
         // --- Initial Page Load ---
         document.addEventListener('DOMContentLoaded', () => {
             showDashboardSection('data-processing-section'); // Show default dashboard section
-            resetFileUpload();
+            resetFileUpload(); // Initialize the state
         });
 
     </script>
+
+     <!-- Basic CSS for alert and badges -->
+    <style>
+        .alert { padding: 10px 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; }
+        .alert-danger { color: #a94442; background-color: #f2dede; border-color: #ebccd1; }
+        .badge { display: inline-block; padding: .25em .6em; font-size: 75%; font-weight: 700; line-height: 1; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25rem; transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+        .badge.info { color: #fff; background-color: var(--secondary); }
+        .badge.warning { color: #212529; background-color: var(--warning); }
+        .badge.success { color: #fff; background-color: var(--success); }
+        .badge.danger { color: #fff; background-color: var(--accent); }
+        .processed-field-item { background-color: var(--light) !important; border: 1px solid var(--border) !important; box-shadow: none !important; cursor: default !important; } /* Override hover styles for modal items */
+    </style>
 
 </body>
 </html>
