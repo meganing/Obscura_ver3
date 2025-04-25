@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obscura: Data Anonymization</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Link to the shared CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-user-secret"></i>
+                <h1>Obscura<span>Prototype</span></h1>
+            </div>
+            <nav class="nav-links">
+                <!-- Links to actual pages -->
+                <a href="/" class="active"><i class="fas fa-tachometer-alt fa-fw"></i> Dashboard</a>
+                <a href="/documentation"><i class="fas fa-book fa-fw"></i> Documentation</a>
+                <a href="/support"><i class="fas fa-headset fa-fw"></i> Support</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="dashboard">
+                <div class="sidebar">
+                    <div class="sidebar-header">
+                        <h3>Dashboard Tools</h3>
+                        <p>Select view</p>
+                    </div>
+                    <!-- Sidebar controls sections *within* this page -->
+                    <div class="menu-item active" data-section="data-processing-section">
+                        <i class="fas fa-shield-alt fa-fw"></i>
+                        <span>Anonymize Data</span>
+                    </div>
+                    <div class="menu-item" data-section="history-section">
+                        <i class="fas fa-history fa-fw"></i>
+                        <span>Processing History</span>
+                    </div>
+                    <div class="menu-item" data-section="settings-section">
+                        <i class="fas fa-cog fa-fw"></i>
+                        <span>Settings</span>
+                    </div>
+                </div>
+
+                <div class="content-area">
+                    <!-- Data Processing Section -->
+                    <div id="data-processing-section" class="content-section active">
+                        <h2 class="section-title"><i class="fas fa-shield-alt"></i> Data Anonymization</h2>
+                        <span class="section-subtitle">Upload and anonymize sensitive data (CSV/Excel)</span>
+
+                        <div class="upload-container" id="drop-area">
+                            <i class="fas fa-file-upload"></i>
+                            <h3>Upload Dataset</h3>
+                            <p>Drag & drop your CSV or Excel file here, or click to browse</p>
+                            <input type="file" id="file-input" accept=".csv, .xlsx, .xls" style="display: none;">
+                            <button class="btn" id="browse-btn"><i class="fas fa-folder-open"></i> Browse Files</button>
+                        </div>
+
+                        <div id="file-details" style="display: none;">
+                            <div class="options-header">
+                                <h3>File Details</h3>
+                                <div class="badge" id="file-status-badge">Ready for processing</div>
+                            </div>
+                            <div class="results-container">
+                                <div class="result-item">
+                                    <div class="result-label">File Name:</div>
+                                    <div class="result-value" id="file-name"></div>
+                                </div>
+                                <div class="result-item">
+                                    <div class="result-label">File Size:</div>
+                                    <div class="result-value" id="file-size"></div>
+                                </div>
+                                <div class="result-item">
+                                    <div class="result-label">File Type:</div>
+                                    <div class="result-value" id="file-type"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="data-options" class="options-container" style="display: none;">
+                            <div class="options-header">
+                                <h3>Anonymization Options</h3>
+                                <div class="badge"><i class="fas fa-search"></i> Auto-detected PII</div>
+                            </div>
+                            <div class="option-group">
+                                <label>Select Columns to Anonymize:</label>
+                                <p style="font-size: 0.85rem; color: var(--text-light); margin-top: -5px; margin-bottom: 15px;">Check the columns containing sensitive information. Hover over labels for detection details.</p>
+                                <div class="checkbox-container" id="pii-fields"></div>
+                            </div>
+                            <div class="option-group">
+                                <label>Anonymization Techniques (Prototype):</label>
+                                <div class="checkbox-container">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="technique-masking" value="masking" checked>
+                                        <label for="technique-masking">Masking (Replace with ***)</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="technique-hashing" value="hashing">
+                                        <label for="technique-hashing">Hashing (Simple SHA256 Demo)</label>
+                                    </div>
+                                </div>
+                                <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 10px;">Note: Masking takes priority if both are selected.</p>
+                            </div>
+                        </div>
+
+                        <div id="data-preview" style="display: none;">
+                            <h3>Data Preview (First 5 Rows)</h3>
+                            <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 15px;">Selected PII fields are highlighted. Scroll horizontally if needed.</p>
+                            <div class="table-container">
+                                <table class="preview-table" id="preview-table"></table>
+                            </div>
+                            <div class="action-row">
+                                <button class="btn btn-outline" id="cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+                                <button class="btn btn-success" id="process-btn" disabled><i class="fas fa-shield-alt"></i> Process & Anonymize</button>
+                            </div>
+                        </div>
+                    </div> <!-- End Data Processing Section -->
+
+                    <!-- History Section (Placeholder) -->
+                    <div id="history-section" class="content-section" style="display: none;">
+                        <h2 class="section-title"><i class="fas fa-history"></i> Processing History</h2>
+                        <span class="section-subtitle">Track your anonymized datasets</span>
+                         <div class="feature-notice">
+                            <i class="fas fa-info-circle"></i> This feature is for demonstration only. History is not saved persistently in this prototype.
+                         </div>
+                         <p>Placeholder content for processing history would go here if implemented.</p>
+                         <!-- You can add the static table example here if you want -->
+                    </div> <!-- End History Section -->
+
+                    <!-- Settings Section (Placeholder) -->
+                    <div id="settings-section" class="content-section" style="display: none;">
+                        <h2 class="section-title"><i class="fas fa-cog"></i> Settings</h2>
+                        <span class="section-subtitle">Configure privacy protection options</span>
+                         <div class="feature-notice">
+                             <i class="fas fa-info-circle"></i> Settings are not functional or saved in this prototype version.
+                         </div>
+                         <p>Placeholder content for settings configuration would go here if implemented.</p>
+                         <!-- You can add the static settings form example here if you want -->
+                    </div> <!-- End Settings Section -->
+
+                </div> <!-- End Content Area -->
+            </div>
+        </div> <!-- End Container -->
+    </main>
+
+    <!-- Process Complete Modal -->
+    <div class="modal" id="process-modal">
+        <!-- Modal structure remains the same as before -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Processing Complete</h3>
+                <button class="close-modal" aria-label="Close modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-icon"><i class="fas fa-shield-alt"></i></div>
+                <h4 style="text-align: center; margin-bottom: 15px;">Anonymization Successful!</h4>
+                <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                    Your anonymized data file should have started downloading automatically.
+                </p>
+                <div class="results-container">
+                    <div class="result-item">
+                        <div class="result-label">Processed File:</div>
+                        <div class="result-value" id="result-filename"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Total Fields Anonymized:</div>
+                        <div class="result-value" id="fields-count"></div>
+                    </div>
+                </div>
+                <div id="processed-fields-container">
+                    <label>Anonymized Columns:</label>
+                    <div class="checkbox-container" id="processed-fields"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="process-new-btn"><i class="fas fa-file-alt"></i> Process Another File</button>
+            </div>
+        </div>
+    </div> <!-- End Modal -->
+
+    <!-- JavaScript for Anonymization Workflow -->
+    <script>
+        // --- Configuration ---
+        const API_BASE_URL = ''; // Relative path works when served from same origin
+
+        // --- DOM Elements ---
+        const sidebarItems = document.querySelectorAll('.sidebar .menu-item[data-section]');
+        const contentSections = document.querySelectorAll('.content-area .content-section');
+
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const fileDetails = document.getElementById('file-details');
+        const fileNameEl = document.getElementById('file-name');
+        const fileSizeEl = document.getElementById('file-size');
+        const fileTypeEl = document.getElementById('file-type');
+        const fileStatusBadge = document.getElementById('file-status-badge');
+        const dataOptions = document.getElementById('data-options');
+        const piiFields = document.getElementById('pii-fields');
+        const dataPreview = document.getElementById('data-preview');
+        const previewTable = document.getElementById('preview-table');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const processBtn = document.getElementById('process-btn');
+
+        const processModal = document.getElementById('process-modal');
+        const closeModal = processModal.querySelector('.close-modal');
+        const resultFilename = document.getElementById('result-filename');
+        const fieldsCount = document.getElementById('fields-count');
+        const processedFields = document.getElementById('processed-fields');
+        const processNewBtn = document.getElementById('process-new-btn');
+
+        // --- State Variables ---
+        let currentFile = null;
+        let tempFileId = null;
+        let detectedPiiColumns = {};
+        let currentHeaders = [];
+        let selectedPiiForProcessing = [];
+
+        // --- Sidebar Navigation (within Dashboard) ---
+        function showDashboardSection(sectionId) {
+            contentSections.forEach(section => {
+                section.style.display = section.id === sectionId ? 'block' : 'none';
+            });
+            sidebarItems.forEach(item => {
+                item.classList.toggle('active', item.getAttribute('data-section') === sectionId);
+            });
+            // Reset file upload state if navigating away from anonymization tool
+            if (sectionId !== 'data-processing-section') {
+                // Only reset if a file *was* being processed
+                if (tempFileId || currentFile) {
+                   // resetFileUpload(); // Decide if you want a full reset or just hide elements
+                }
+            }
+             console.log(`Showing dashboard section: ${sectionId}`);
+        }
+
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sectionId = this.getAttribute('data-section');
+                showDashboardSection(sectionId);
+            });
+        });
+
+
+        // --- Anonymization Workflow Logic ---
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        dropArea.addEventListener('dragover', handleDragOver);
+        dropArea.addEventListener('dragleave', handleDragLeave);
+        dropArea.addEventListener('drop', handleDrop);
+        cancelBtn.addEventListener('click', resetFileUpload);
+        processBtn.addEventListener('click', handleProcessRequest);
+        closeModal.addEventListener('click', hideModal);
+        processNewBtn.addEventListener('click', () => {
+            hideModal();
+            resetFileUpload();
+        });
+
+        // --- Functions (handleFileSelect, uploadAndDetect, showDataOptions, etc.) ---
+        // --- Paste the JavaScript functions from the previous response here ---
+        // --- Make sure API_BASE_URL is empty ('') or '/' if needed ---
+        function handleFileSelect(e) {
+            if (e.target.files && e.target.files[0]) {
+                currentFile = e.target.files[0];
+                uploadAndDetect(currentFile);
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropArea.style.borderColor = 'var(--secondary)';
+            dropArea.style.transform = 'scale(1.01)';
+        }
+
+        function handleDragLeave() {
+            dropArea.style.borderColor = 'var(--border)';
+            dropArea.style.transform = 'scale(1)';
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            handleDragLeave();
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                currentFile = e.dataTransfer.files[0];
+                uploadAndDetect(currentFile);
+            }
+        }
+
+        async function uploadAndDetect(file) {
+            if (!file) return;
+            resetFileUploadPartial();
+
+            fileNameEl.textContent = file.name;
+            fileSizeEl.textContent = formatFileSize(file.size);
+            fileTypeEl.textContent = file.type || 'N/A';
+            fileDetails.style.display = 'block';
+            fileStatusBadge.textContent = 'Uploading & Processing...';
+            fileStatusBadge.style.backgroundColor = 'rgba(255, 206, 84, 0.1)';
+            fileStatusBadge.style.color = '#8a6d3b';
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // Use relative path for API call since served from same origin
+                const response = await fetch(`/api/process`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: `Upload failed! status: ${response.status}` }));
+                    throw new Error(errorData.detail || `Upload failed! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Detection Response:", data);
+
+                tempFileId = data.temp_id;
+                detectedPiiColumns = data.detected_pii;
+                currentHeaders = data.headers;
+
+                showDataOptions(data.headers, data.detected_pii);
+                generatePreview(data.headers, data.preview_data);
+
+                fileStatusBadge.textContent = 'Ready for Processing';
+                fileStatusBadge.style.backgroundColor = 'rgba(93, 156, 236, 0.12)';
+                fileStatusBadge.style.color = 'var(--secondary)';
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Process & Anonymize';
+
+            } catch (error) {
+                console.error('Upload/Detection Error:', error);
+                fileStatusBadge.textContent = 'Error';
+                fileStatusBadge.style.backgroundColor = 'rgba(255, 94, 125, 0.1)';
+                fileStatusBadge.style.color = 'var(--accent)';
+                alert(`Error processing file: ${error.message}`);
+                resetFileUpload();
+            }
+        }
+
+        function showDataOptions(headers, detectedPii) {
+             piiFields.innerHTML = '';
+             selectedPiiForProcessing = [];
+
+             headers.forEach(header => {
+                 const isDetected = header in detectedPii;
+                 const headerId = `field-${header.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+                 const checkboxItem = document.createElement('div');
+                 checkboxItem.className = 'checkbox-item';
+
+                 const checkbox = document.createElement('input');
+                 checkbox.type = 'checkbox';
+                 checkbox.id = headerId
+                 checkbox.value = header;
+                 checkbox.checked = isDetected;
+
+                 if (isDetected) {
+                     selectedPiiForProcessing.push(header);
+                 }
+
+                 checkbox.addEventListener('change', function() {
+                     if (this.checked) {
+                         selectedPiiForProcessing.push(header);
+                     } else {
+                         selectedPiiForProcessing = selectedPiiForProcessing.filter(h => h !== header);
+                     }
+                     updatePreviewHighlighting();
+                     console.log("Selected PII:", selectedPiiForProcessing);
+                 });
+
+                 const label = document.createElement('label');
+                 label.setAttribute('for', headerId);
+                 label.textContent = header;
+                 if (isDetected) {
+                     label.title = `Detected as: ${detectedPii[header]}`;
+                 }
+
+                 checkboxItem.addEventListener('click', (e) => {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
+                 });
+
+                 checkboxItem.appendChild(checkbox);
+                 checkboxItem.appendChild(label);
+                 piiFields.appendChild(checkboxItem);
+             });
+
+             dataOptions.style.display = 'block';
+             updatePreviewHighlighting();
+         }
+
+        function generatePreview(headers, previewData) {
+            let headerHTML = '<thead><tr>';
+            headers.forEach(header => {
+                headerHTML += `<th data-header="${escapeHtml(header)}">${escapeHtml(header)}</th>`;
+            });
+            headerHTML += '</tr></thead>';
+
+            let rowsHTML = '<tbody>';
+            previewData.forEach(row => {
+                rowsHTML += '<tr>';
+                headers.forEach(header => {
+                    const cellValue = row[header] !== null && row[header] !== undefined ? row[header] : '';
+                    rowsHTML += `<td data-header="${escapeHtml(header)}">${escapeHtml(cellValue)}</td>`;
+                });
+                rowsHTML += '</tr>';
+            });
+            rowsHTML += '</tbody>';
+
+            previewTable.innerHTML = headerHTML + rowsHTML;
+            dataPreview.style.display = 'block';
+            updatePreviewHighlighting();
+        }
+
+        function updatePreviewHighlighting() {
+             previewTable.querySelectorAll('th, td').forEach(cell => {
+                 const header = cell.getAttribute('data-header');
+                 if (selectedPiiForProcessing.includes(header)) {
+                     cell.classList.add('anonymized');
+                 } else {
+                     cell.classList.remove('anonymized');
+                 }
+             });
+         }
+
+        async function handleProcessRequest() {
+            if (!tempFileId) {
+                alert("No file processed yet. Please upload a file first.");
+                return;
+            }
+             if (selectedPiiForProcessing.length === 0) {
+                 if (!confirm("You haven't selected any columns to anonymize. Proceeding will download the data structure without changes. Continue?")) {
+                     return;
+                 }
+             }
+
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Anonymizing...';
+            fileStatusBadge.textContent = 'Anonymizing...';
+
+            const techniques = {
+                masking: document.getElementById('technique-masking')?.checked || false,
+                hashing: document.getElementById('technique-hashing')?.checked || false,
+            };
+
+            const payload = {
+                selected_pii: selectedPiiForProcessing,
+                techniques: techniques
+            };
+
+            try {
+                const response = await fetch(`/api/anonymize/${tempFileId}`, { // Relative path
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: `Anonymization failed! status: ${response.status}` }));
+                    throw new Error(errorData.detail || `Anonymization failed! status: ${response.status}`);
+                }
+
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('content-disposition');
+                let downloadFilename = "anonymized_data.csv";
+
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+                    if (filenameMatch && filenameMatch.length > 1) {
+                        downloadFilename = filenameMatch[1];
+                    }
+                }
+
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = downloadFilename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                console.log("Anonymization successful, download triggered.");
+                fileStatusBadge.textContent = 'Completed & Downloaded';
+                fileStatusBadge.style.backgroundColor = 'rgba(66, 206, 159, 0.1)';
+                fileStatusBadge.style.color = 'var(--success)';
+
+                showModal(downloadFilename, selectedPiiForProcessing);
+
+            } catch (error) {
+                console.error('Anonymization Error:', error);
+                fileStatusBadge.textContent = 'Anonymization Error';
+                fileStatusBadge.style.backgroundColor = 'rgba(255, 94, 125, 0.1)';
+                fileStatusBadge.style.color = 'var(--accent)';
+                alert(`Error anonymizing data: ${error.message}`);
+                processBtn.disabled = false;
+                 processBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Process & Anonymize';
+
+            } finally {
+                tempFileId = null; // Invalidate after attempt
+            }
+        }
+
+        function showModal(downloadedFilename, anonymizedFieldsList) {
+             resultFilename.textContent = downloadedFilename;
+             fieldsCount.textContent = `${anonymizedFieldsList.length} fields`;
+             processedFields.innerHTML = '';
+             if (anonymizedFieldsList.length > 0) {
+                 anonymizedFieldsList.forEach(field => {
+                     const item = document.createElement('div');
+                     item.className = 'checkbox-item';
+                     item.style.backgroundColor = 'var(--light)'; item.style.border = '1px solid var(--border)'; item.style.boxShadow = 'none'; item.style.cursor = 'default';
+                     const icon = document.createElement('i');
+                     icon.className = 'fas fa-check-circle'; icon.style.color = 'var(--success)'; icon.style.marginRight = '8px';
+                     const label = document.createElement('span'); label.textContent = field;
+                     item.appendChild(icon); item.appendChild(label);
+                     processedFields.appendChild(item);
+                 });
+             } else {
+                 processedFields.innerHTML = '<p style="font-style: italic; color: var(--text-light);">No fields were anonymized.</p>';
+             }
+             processModal.classList.add('show');
+         }
+
+         function hideModal() {
+            processModal.classList.remove('show');
+         }
+
+        function resetFileUploadPartial() {
+            fileDetails.style.display = 'none';
+            dataOptions.style.display = 'none';
+            dataPreview.style.display = 'none';
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-shield-alt"></i> Process & Anonymize';
+            currentFile = null;
+            tempFileId = null;
+            detectedPiiColumns = {};
+            currentHeaders = [];
+            selectedPiiForProcessing = [];
+            piiFields.innerHTML = '';
+            previewTable.innerHTML = '';
+        }
+
+        function resetFileUpload() {
+            resetFileUploadPartial();
+            fileInput.value = '';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024; const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') { try { unsafe = String(unsafe); } catch (e) { return ''; } }
+            return unsafe.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, '"').replace(/'/g, "'");
+         }
+
+        // --- Initial Page Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showDashboardSection('data-processing-section'); // Show default dashboard section
+            resetFileUpload();
+        });
+
+    </script>
+
+</body>
+</html>
