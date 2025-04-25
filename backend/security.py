@@ -65,9 +65,6 @@ def verify_user(username: str, password: str) -> Optional[Dict[str, str]]:
     log.info(f"User '{username}' successfully authenticated.")
     return {"username": username, "role": user_data["role"]}
 
-
-# --- Keep the rest of the functions as they were ---
-
 def get_current_user(request: Request) -> Dict[str, str]:
     """Retrieves the current user from the session or raises Unauthorized."""
     user = request.session.get("user")
