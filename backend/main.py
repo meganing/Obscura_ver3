@@ -111,7 +111,7 @@ def logout(request: Request):
 
 @app.post("/api/process")
 async def process_file(request: Request, file: UploadFile = File(...), user: Dict[str, str] = Depends(get_current_user)):
-    """Handles file upload, basic validation, PII detection preview."""
+    """Handles file upload, validation, HASHING, and preview.""" # Added HASHING to docstring
     username = user.get("username", "unknown")
     log.info(f"User '{username}' initiating file processing for: {file.filename}")
 
@@ -122,12 +122,29 @@ async def process_file(request: Request, file: UploadFile = File(...), user: Dic
 
     file_id = str(uuid.uuid4())
     input_path = os.path.join(UPLOAD_DIR, f"{file_id}{file_ext}")
+    original_file_hash = None # Initialize hash variable
 
     try:
         # Save uploaded file temporarily
         with open(input_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         log.info(f"File '{file.filename}' uploaded by '{username}', saved as temp ID: {file_id}")
+
+        # --- ADD HASH CALCULATION AND STORAGE ---
+        try:
+            original_file_hash = generate_file_hash(input_path)
+            log.info(f"Generated original SHA256 hash for temp ID {file_id}: {original_file_hash}")
+
+            # Store the hash in the session, keyed by file_id
+            session_hashes = request.session.get("file_hashes", {})
+            session_hashes[file_id] = original_file_hash
+            request.session["file_hashes"] = session_hashes # Update session data
+
+        except Exception as hash_err:
+            log.error(f"Failed to generate hash for temp ID {file_id}: {hash_err}")
+            # Raise an error to prevent processing potentially corrupt data
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to calculate file integrity hash after upload.")
+        # --- END HASH CALCULATION AND STORAGE ---
 
         # Get preview and detected PII
         preview_data, headers, pii_detected = anonymize_file(input_path, preview_only=True)
@@ -138,30 +155,29 @@ async def process_file(request: Request, file: UploadFile = File(...), user: Dic
             "detected_pii": pii_detected,
             "headers": headers,
             "preview_data": preview_data,
-            "original_filename": file.filename # Send original name back for clarity
+            "original_filename": file.filename,
+            "original_hash": original_file_hash # <-- Return hash to frontend (optional)
         }
 
+    except HTTPException as http_exc:
+         raise http_exc # Re-raise HTTP exceptions directly
     except ValueError as e:
         log.error(f"Value error during processing for {file_id} by '{username}': {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        log.exception(f"Unexpected error during file processing for {file_id} by '{username}': {e}") # Use log.exception to include traceback
-        # Clean up potentially corrupted temp file
+        log.exception(f"Unexpected error during file processing for {file_id} by '{username}': {e}")
         if os.path.exists(input_path):
-            try:
-                os.remove(input_path)
-            except OSError as rm_err:
-                log.error(f"Could not remove temp file {input_path} after error: {rm_err}")
+            try: os.remove(input_path)
+            except OSError as rm_err: log.error(f"Could not remove temp file {input_path} after error: {rm_err}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal error occurred during file processing.")
     finally:
-         # Ensure file handle is closed (though `with open` should handle it)
          if hasattr(file, 'file') and not file.file.closed:
             file.file.close()
 
 
 @app.post("/api/anonymize/{file_id}")
-async def anonymize_endpoint(file_id: str, payload: Dict[str, Any], user: Dict[str, str] = Depends(get_current_user)):
-    """Applies selected anonymization techniques and returns the file for download."""
+async def anonymize_endpoint(request: Request, file_id: str, payload: Dict[str, Any], user: Dict[str, str] = Depends(get_current_user)):
+    """Verifies integrity, applies anonymization, returns file for download.""" # Added integrity to docstring
     username = user.get("username", "unknown")
     log.info(f"User '{username}' requesting anonymization for file ID: {file_id}")
     log.debug(f"Anonymization payload for {file_id}: {payload}")
@@ -180,8 +196,41 @@ async def anonymize_endpoint(file_id: str, payload: Dict[str, Any], user: Dict[s
         log.error(f"Anonymization request failed for '{username}': Original file not found for ID: {file_id}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Original temporary file not found. It might have expired or been deleted.")
 
+    # --- ADD HASH VERIFICATION ---
+    try:
+        # Retrieve the original hash stored during upload
+        session_hashes = request.session.get("file_hashes", {})
+        expected_hash = session_hashes.get(file_id)
+
+        if not expected_hash:
+            log.warning(f"Integrity check failed for {file_id}: Original hash not found in session for user '{username}'.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File integrity check failed: Original hash missing or session expired.")
+
+        # Calculate current hash of the file just before processing
+        current_hash = generate_file_hash(input_path)
+        log.info(f"Verifying integrity for temp ID {file_id}. Expected: {expected_hash}, Current: {current_hash}")
+
+        # Compare hashes
+        if current_hash != expected_hash:
+            log.error(f"INTEGRITY FAILURE for {file_id}: Hashes do not match! Expected={expected_hash}, Current={current_hash}")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="File integrity check failed: File content has changed since upload.")
+        else:
+            log.info(f"Integrity check PASSED for temp ID {file_id}.")
+
+    except FileNotFoundError:
+         log.error(f"Integrity check failed for {file_id}: File not found at {input_path} during hash verification.")
+         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found during integrity check.")
+    except HTTPException as http_exc:
+        raise http_exc # Re-raise specific HTTP exceptions
+    except Exception as verify_err:
+         log.exception(f"Error during integrity verification for {file_id}: {verify_err}")
+         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal error occurred during file integrity check.")
+    # --- END HASH VERIFICATION ---
+
+    # --- If hash verification passes, proceed with anonymization ---
     output_filename = f"anonymized_{file_id}{original_ext}"
     output_path = os.path.join(RESULT_DIR, output_filename)
+    output_hash = None # Initialize output hash
 
     try:
         # Perform anonymization (which saves the file)
@@ -191,11 +240,30 @@ async def anonymize_endpoint(file_id: str, payload: Dict[str, Any], user: Dict[s
         techniques = payload.get("techniques", {})
         log.info(f"Anonymization successful for file ID: {file_id} by '{username}'. Output: {output_path}. Columns anonymized: {selected_cols}. Techniques: {techniques}")
 
+        # --- Optional: Calculate and Send Output Hash ---
+        try:
+            output_hash = generate_file_hash(output_path)
+            log.info(f"Generated SHA256 hash for output file {output_filename}: {output_hash}")
+            response_headers = {"X-Content-SHA256": output_hash} # Custom header
+        except Exception as out_hash_err:
+            log.error(f"Failed to generate hash for output file {output_path}: {out_hash_err}")
+            response_headers = {} # Send no header if hashing failed
+        # --- End Optional Output Hash ---
+
+        # --- Clean up stored hash from session ---
+        session_hashes = request.session.get("file_hashes", {})
+        if file_id in session_hashes:
+            del session_hashes[file_id]
+            request.session["file_hashes"] = session_hashes
+            log.debug(f"Removed hash for {file_id} from session.")
+        # --- End Session Cleanup ---
+
         # Return the anonymized file as a download response
         return FileResponse(
             path=output_path,
-            filename=output_filename, # Suggests a filename to the browser
-            media_type="application/octet-stream" # Generic binary stream type
+            filename=output_filename,
+            media_type="application/octet-stream",
+            headers=response_headers # Add the custom hash header
         )
 
     except ValueError as e:
@@ -210,8 +278,9 @@ async def anonymize_endpoint(file_id: str, payload: Dict[str, Any], user: Dict[s
 
 
 # Note: This endpoint might be redundant if anonymize_endpoint always triggers download.
-# Keep it if you want a way to re-download results (requires persistent storage logic).
+# We caneep it if we want a way to re-download results (requires persistent storage logic),  idk O.O. Might figure it out later.
 # SECURED: Added authentication dependency
+
 @app.get("/download/{file_id}")
 async def download_file(file_id: str, user: Dict[str, str] = Depends(get_current_user)):
     """Allows re-downloading of an already anonymized file."""
