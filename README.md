@@ -5,9 +5,15 @@ A secure data anonymization tool with a modern frontend and FastAPI backend. Sup
 
 ## Requirements
 - Python 3.8+
-- pip install fastapi uvicorn pandas openpyxl passlib[bcrypt]
+- pip install fastapi uvicorn pandas openpyxl bcrypt==4.0.1 "passlib[bcrypt]" itsdangerous jinja2 python-multipart
 
 ## How to Run
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+install dependencies 
+
 ```bash
 uvicorn backend.main:app --reload
 ```
